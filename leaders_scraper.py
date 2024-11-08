@@ -8,24 +8,21 @@ def get_new_cookies(cookie_url):
     return cookies
 
 def get_first_paragraph(wikipedia_url,session):
-    patt=  r"<(?:b|strong|i)[^>]*>.*?<\/(?:b|strong|i)>"
-    session = requests.Session()
-    response = session.get(wikipedia_url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    # Extract language and title from the URL
+    match = re.search(r"https://([a-z]+)\.wikipedia\.org/wiki/(.+)", wikipedia_url)
+    if not match:
+        return ""
     
- 
-    print(wikipedia_url) 
-    #content_div = soup.find('div', {'class': 'mw-parser-output'})
-    first_paragraph = ''
-    #if content_div:
-    paragraphs = soup.find_all('p')  
-    for paragraph in paragraphs:
-            paragraph_text = paragraph.get_text(strip=True)  
-            cleaned_paragraph = re.sub(r'\[.*?\]', '', paragraph_text)
-            if cleaned_paragraph and re.search(patt,str(paragraph) ):
-                first_paragraph = cleaned_paragraph
-                break  
-    return first_paragraph
+    language = match.group(1)
+    title = match.group(2)
+
+    api_url = f"https://{language}.wikipedia.org/api/rest_v1/page/summary/{title}"
+    response = requests.get(api_url)
+    if response.status_code != 200:
+        return ""
+    
+    data = response.json()
+    return data.get("extract", "")
 
 def get_leaders():
     # Define the URLs
